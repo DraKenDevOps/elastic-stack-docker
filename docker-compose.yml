@@ -1,0 +1,99 @@
+version: "3.9"
+
+services:
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.10.4
+        volumes:
+            - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+            - ./elasticsearch/data:/usr/share/elasticsearch/data:Z
+            - ./elasticsearch/entrypoint.sh:/entrypoint.sh:ro,Z
+            - ./elasticsearch/lib.sh:/lib.sh:ro,Z
+            - ./elasticsearch/roles:/roles:ro,Z
+        ports:
+            - 9200:9200
+            - 9300:9300
+        environment:
+            node.name: elasticsearch
+            ES_JAVA_OPTS: -Xms512m -Xmx512m
+            discovery.type: single-node
+            # ELASTIC_PASSWORD: System@999
+            # LOGSTASH_INTERNAL_PASSWORD: System@999
+            # KIBANA_SYSTEM_PASSWORD: System@999
+            # METRICBEAT_INTERNAL_PASSWORD: System@999
+            # FILEBEAT_INTERNAL_PASSWORD: System@999
+            # HEARTBEAT_INTERNAL_PASSWORD: System@999
+            # MONITORING_INTERNAL_PASSWORD: System@999
+            # BEATS_SYSTEM_PASSWORD: System@999
+            ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+            LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD}
+            KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD}
+            METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD}
+            FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD}
+            HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD}
+            MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD}
+            BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
+        networks:
+            - tester
+        restart: unless-stopped
+
+    logstash:
+        image: docker.elastic.co/logstash/logstash:8.10.4
+        volumes:
+            - ./logstash/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
+            - ./logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
+        ports:
+            - 5044:5044
+            - 50000:50000/tcp
+            - 50000:50000/udp
+            - 9600:9600
+        environment:
+            LS_JAVA_OPTS: -Xms256m -Xmx256m
+            LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD}
+        networks:
+            - tester
+        depends_on:
+            - elasticsearch
+        restart: unless-stopped
+
+    kibana:
+        image: docker.elastic.co/kibana/kibana:8.10.4
+        volumes:
+            - ./kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+        ports:
+            - 5601:5601
+        environment:
+            KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD}
+            LOG_LEVEL: verbose
+        networks:
+            - tester
+        depends_on:
+            - elasticsearch
+        restart: unless-stopped
+
+    filebeat:
+        image: docker.elastic.co/beats/filebeat:8.10.4
+        user: root
+        command:
+            - -e
+            - --strict.perms=false
+        volumes:
+            - ./extensions/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro,Z
+            - type: bind
+              source: /var/lib/docker/containers
+              target: /var/lib/docker/containers
+              read_only: true
+            - type: bind
+              source: /var/run/docker.sock
+              target: /var/run/docker.sock
+              read_only: true
+        environment:
+            FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD}
+            BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
+        networks:
+            - tester
+        depends_on:
+            - elasticsearch
+
+networks:
+    tester:
+        external: true
