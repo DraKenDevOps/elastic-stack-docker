@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 services:
   logspout:
@@ -11,7 +11,7 @@ services:
         read_only: true
     environment:
       ROUTE_URIS: logstash://logstash:50000
-      LOGSTASH_TAGS: docker-elk
+      LOGSTASH_TAGS: elastic-stack
     networks:
       - elk
     depends_on:

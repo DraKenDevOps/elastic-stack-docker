@@ -29,7 +29,7 @@ $ docker-compose -f docker-compose.yml -f extensions/fleet/fleet-compose.yml up
 Fleet Server — like any Elastic Agent — is configured via [Agent Policies][fleet-pol] which can be either managed
 through the Fleet management UI in Kibana, or statically pre-configured inside the Kibana configuration file.
 
-To ease the enrollment of Fleet Server in this extension, docker-elk comes with a pre-configured Agent Policy for Fleet
+To ease the enrollment of Fleet Server in this extension, elastic-stack comes with a pre-configured Agent Policy for Fleet
 Server defined inside [`kibana/config/kibana.yml`][config-kbn].
 
 Please refer to the following documentation page for more details about configuring Fleet Server through the Fleet

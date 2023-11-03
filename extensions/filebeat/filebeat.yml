@@ -16,12 +16,12 @@ processors:
 monitoring:
   enabled: true
   elasticsearch:
-    username: beats_system
+    username: ${FILEBEAT_USERNAME}
     password: ${BEATS_SYSTEM_PASSWORD}
 
 output.elasticsearch:
-  hosts: [ http://elasticsearch:9200 ]
-  username: filebeat_internal
+  hosts: ["${ELASTIC_SEARCH_HOST}"]
+  username: ${FILEBEAT_USERNAME}
   password: ${FILEBEAT_INTERNAL_PASSWORD}
 
 http:

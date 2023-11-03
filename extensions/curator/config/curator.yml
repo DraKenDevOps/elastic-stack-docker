@@ -3,9 +3,9 @@
 
 elasticsearch:
   client:
-    hosts: [ http://elasticsearch:9200 ]
+    hosts: [http://elasticsearch:9200]
   other_settings:
-    username: elastic
+    username: ${ELASTIC_USERNAME}
     password: ${ELASTIC_PASSWORD}
 
 logging:
