@@ -1,22 +1,19 @@
 version: "3.9"
 
 services:
-    elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.10.4
-        platform: linux/amd64
+    setup:
+        profiles:
+            - setup
+        build:
+            context: setup/
+            args:
+                ELASTIC_VERSION: ${ELASTIC_VERSION}
+        init: true
         volumes:
-            - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
-            - ./elasticsearch/data:/usr/share/elasticsearch/data:Z
-            - ./elasticsearch/entrypoint.sh:/entrypoint.sh:ro,Z
-            - ./elasticsearch/lib.sh:/lib.sh:ro,Z
-            - ./elasticsearch/roles:/roles:ro,Z
-        ports:
-            - 9200:9200
-            - 9300:9300
+            - ./setup/entrypoint.sh:/entrypoint.sh:ro,Z
+            - ./setup/lib.sh:/lib.sh:ro,Z
+            - ./setup/roles:/roles:ro,Z
         environment:
-            node.name: elasticsearch
-            ES_JAVA_OPTS: -Xms512m -Xmx512m
-            discovery.type: single-node
             ELASTIC_USERNAME: ${ELASTIC_USERNAME}
             ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
             LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD}
@@ -28,15 +25,35 @@ services:
             BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
         networks:
             - tester
+        depends_on:
+            - elasticsearch
+
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+        platform: linux/amd64
+        volumes:
+            - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+            - elasticsearch/data:/usr/share/elasticsearch/data:Z
+        ports:
+            - 9200:9200
+            - 9300:9300
+        environment:
+            node.name: elasticsearch
+            ES_JAVA_OPTS: -Xms512m -Xmx512m
+            discovery.type: single-node
+            ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+            ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+        networks:
+            - tester
         restart: unless-stopped
 
     logstash:
-        image: docker.elastic.co/logstash/logstash:8.10.4
+        image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION}
         platform: linux/amd64
         volumes:
             - ./logstash/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
             - ./logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
-        command: logstash -f /pipeline/logstash.conf
+        # command: logstash -f /pipeline/logstash.conf
         ports:
             - 5044:5044
             - 50000:50000/tcp
@@ -44,8 +61,7 @@ services:
             - 9600:9600
         environment:
             LS_JAVA_OPTS: -Xms256m -Xmx256m
-            ELASTICS_SEARCH_HOST: http://elasticsearch:9200
-            LOGSTASH_USERNAME: ${LOGSTASH_USERNAME}
+            LOGSTASH_USERNAME: logstash01
             LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD}
         networks:
             - tester
@@ -54,17 +70,16 @@ services:
         restart: unless-stopped
 
     kibana:
-        image: docker.elastic.co/kibana/kibana:8.10.4
+        image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}
         platform: linux/amd64
         volumes:
             - ./kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
         ports:
             - 5601:5601
         environment:
-            ELASTIC_SEARCH_HOST: http://elasticsearch:9200
-            KIBANA_USERNAME: ${KIBANA_USERNAME}
+            KIBANA_USERNAME: kibana01
             KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD}
-            LOG_LEVEL: verbose
+            # LOG_LEVEL: verbose
         networks:
             - tester
         depends_on:
@@ -72,7 +87,7 @@ services:
         restart: unless-stopped
 
     filebeat:
-        image: docker.elastic.co/beats/filebeat:8.10.4
+        image: docker.elastic.co/beats/filebeat:${ELASTIC_VERSION}
         platform: linux/amd64
         user: root
         command:
@@ -89,8 +104,8 @@ services:
               target: /var/run/docker.sock
               read_only: true
         environment:
-            ELASTICS_SEARCH_HOST: http://elasticsearch:9200
-            FILEBEAT_USERNAME: ${FILEBEAT_USERNAME}
+            BEATS_USERNAME: beats01
+            FILEBEAT_USERNAME: filebeat01
             FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD}
             BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
         networks:
@@ -102,3 +117,6 @@ services:
 networks:
     tester:
         external: true
+
+volumes:
+    elasticsearch:

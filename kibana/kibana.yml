@@ -1,6 +1,7 @@
 server.name: kibana
 server.host: 0.0.0.0
-elasticsearch.hosts: ["${ELASTIC_SEARCH_HOST}"]
+# elasticsearch.hosts: ["${ELASTIC_SEARCH_HOST}"]
+elasticsearch.hosts: [http://elasticsearch:9200]
 
 monitoring.ui.container.elasticsearch.enabled: true
 monitoring.ui.container.logstash.enabled: true
@@ -9,15 +10,19 @@ elasticsearch.username: ${KIBANA_USERNAME}
 elasticsearch.password: ${KIBANA_SYSTEM_PASSWORD}
 
 xpack.fleet.agents.fleet_server.hosts: [http://fleet-server:8220]
-xpack.encryptedSavedObjects:
-  # TODO: add encryption key
-  encryptionKey: IDGzk9BuDaMTs5OvWv0PdxrFxZKTk7HGCJMRR9TwUG8=
+
+# Generate with either
+#  $ docker container run --rm docker.elastic.co/kibana/kibana:8.6.2 bin/kibana-encryption-keys generate
+#  $ openssl rand -hex 32
+xpack.security.encryptionKey: IDGzk9BuDaMTs5OvWv0PdxrFxZKTk7HGCJMRR9TwUG8=
+xpack.encryptedSavedObjects.encryptionKey: IDGzk9BuDaMTs5OvWv0PdxrFxZKTk7HGCJMRR9TwUG8=
+xpack.reporting.encryptionKey: IDGzk9BuDaMTs5OvWv0PdxrFxZKTk7HGCJMRR9TwUG8=
 
 xpack.fleet.outputs:
   - id: fleet-default-output
     name: default
     type: elasticsearch
-    hosts: ["${ELASTIC_SEARCH_HOST}"]
+    hosts: [http://elasticsearch:9200]
     is_default: true
     is_default_monitoring: true
 
