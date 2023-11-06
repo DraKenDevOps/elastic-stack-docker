@@ -4,17 +4,16 @@ services:
     setup:
         profiles:
             - setup
-        build:
-            context: setup/
-            args:
-                ELASTIC_VERSION: ${ELASTIC_VERSION}
+        image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+        entrypoint: /setup/entrypoint.sh
+        # command: ["./setup/entrypoint.sh"]
         init: true
         volumes:
             - ./setup/entrypoint.sh:/entrypoint.sh:ro,Z
             - ./setup/lib.sh:/lib.sh:ro,Z
             - ./setup/roles:/roles:ro,Z
         environment:
-            ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+            # ELASTIC_USERNAME: elastic01
             ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
             LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD}
             KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD}
@@ -25,7 +24,7 @@ services:
             BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
         networks:
             - tester
-            - elastic-network
+            # - elastic-network
         depends_on:
             - elasticsearch
 
@@ -34,7 +33,7 @@ services:
         platform: linux/amd64
         volumes:
             - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
-            - elasticsearch/data:/usr/share/elasticsearch/data:Z
+            - ./elasticsearch/data:/usr/share/elasticsearch/data:Z
         ports:
             - 9200:9200
             - 9300:9300
@@ -42,11 +41,11 @@ services:
             node.name: elasticsearch
             ES_JAVA_OPTS: -Xms512m -Xmx512m
             discovery.type: single-node
-            ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+            # ELASTIC_USERNAME: elastic01
             ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
         networks:
             - tester
-            - elastic-network
+            # - elastic-network
         restart: unless-stopped
 
     logstash:
@@ -63,11 +62,11 @@ services:
             - 9600:9600
         environment:
             LS_JAVA_OPTS: -Xms256m -Xmx256m
-            LOGSTASH_USERNAME: logstash01
+            LOGSTASH_USERNAME: logstash_internal
             LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD}
         networks:
             - tester
-            - elastic-network
+            # - elastic-network
         depends_on:
             - elasticsearch
         restart: unless-stopped
@@ -80,12 +79,13 @@ services:
         ports:
             - 5601:5601
         environment:
-            KIBANA_USERNAME: kibana01
+            KIBANA_USERNAME: kibana_system
             KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD}
+            KIBANA_ENCRYPTION_KEY: ${KIBANA_ENCRYPTION_KEY}
             # LOG_LEVEL: verbose
         networks:
             - tester
-            - elastic-network
+            # - elastic-network
         depends_on:
             - elasticsearch
         restart: unless-stopped
@@ -108,13 +108,13 @@ services:
               target: /var/run/docker.sock
               read_only: true
         environment:
-            BEATS_USERNAME: beats01
-            FILEBEAT_USERNAME: filebeat01
+            BEATS_USERNAME: beats_system
+            FILEBEAT_USERNAME: filebeat_internal
             FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD}
             BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
         networks:
             - tester
-            - elastic-network
+            # - elastic-network
         depends_on:
             - elasticsearch
         restart: unless-stopped
@@ -124,6 +124,5 @@ networks:
     #     driver: bridge
     tester:
         external: true
-
-volumes:
-    elasticsearch:
+# volumes:
+#     elasticsearch:

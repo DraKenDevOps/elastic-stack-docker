@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 services:
   metricbeat:
@@ -6,18 +6,10 @@ services:
       context: extensions/metricbeat/
       args:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
-    # Run as 'root' instead of 'metricbeat' (uid 1000) to allow reading
-    # 'docker.sock' and the host's filesystem.
     user: root
     command:
-      # Log to stderr.
       - -e
-      # Disable config file permissions checks. Allows mounting
-      # 'config/metricbeat.yml' even if it's not owned by root.
-      # see: https://www.elastic.co/guide/en/beats/libbeat/current/config-file-permissions.html
       - --strict.perms=false
-      # Mount point of the host’s filesystem. Required to monitor the host
-      # from within a container.
       - --system.hostfs=/hostfs
     volumes:
       - ./extensions/metricbeat/config/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro,Z
@@ -38,9 +30,9 @@ services:
         target: /var/run/docker.sock
         read_only: true
     environment:
-      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
-      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
-      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
+      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD}
+      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD}
+      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
     networks:
       - elk
     depends_on:

@@ -12,11 +12,11 @@ elasticsearch.password: ${KIBANA_SYSTEM_PASSWORD}
 xpack.fleet.agents.fleet_server.hosts: [http://fleet-server:8220]
 
 # Generate with either
-#  $ docker container run --rm docker.elastic.co/kibana/kibana:8.6.2 bin/kibana-encryption-keys generate
-#  $ openssl rand -hex 32
-xpack.security.encryptionKey: IDGzk9BuDaMTs5OvWv0PdxrFxZKTk7HGCJMRR9TwUG8=
-xpack.encryptedSavedObjects.encryptionKey: IDGzk9BuDaMTs5OvWv0PdxrFxZKTk7HGCJMRR9TwUG8=
-xpack.reporting.encryptionKey: IDGzk9BuDaMTs5OvWv0PdxrFxZKTk7HGCJMRR9TwUG8=
+# $ docker container run --rm docker.elastic.co/kibana/kibana:8.6.2 bin/kibana-encryption-keys generate
+# $ openssl rand -hex 32
+xpack.security.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+xpack.encryptedSavedObjects.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+xpack.reporting.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
 
 xpack.fleet.outputs:
   - id: fleet-default-output
