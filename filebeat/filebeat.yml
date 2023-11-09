@@ -10,6 +10,12 @@ filebeat.autodiscover:
     - type: docker
       hints.enabled: true
 
+# filebeat.inputs:
+#   - type: log
+#     enabled: true
+#     paths:
+#     -
+
 processors:
   - add_cloud_metadata: ~
 

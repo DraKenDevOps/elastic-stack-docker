@@ -1,2 +1,4 @@
 .env*
 elasticsearch/data/*
+apm-server/data/*
+fleet-server/data/*

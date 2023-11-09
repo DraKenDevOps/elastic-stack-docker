@@ -98,7 +98,7 @@ services:
             - -e
             - --strict.perms=false
         volumes:
-            - ./extensions/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro,Z
+            - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro,Z
             - type: bind
               source: /var/lib/docker/containers
               target: /var/lib/docker/containers
@@ -118,6 +118,101 @@ services:
         depends_on:
             - elasticsearch
         restart: unless-stopped
+
+    metricbeat:
+        image: docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION}
+        user: root
+        command:
+            - -e
+            - --strict.perms=false
+            - --system.hostfs=/hostfs
+        volumes:
+            - ./metricbeat/config/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro,Z
+            - type: bind
+              source: /
+              target: /hostfs
+              read_only: true
+            - type: bind
+              source: /sys/fs/cgroup
+              target: /hostfs/sys/fs/cgroup
+              read_only: true
+            - type: bind
+              source: /proc
+              target: /hostfs/proc
+              read_only: true
+            - type: bind
+              source: /var/run/docker.sock
+              target: /var/run/docker.sock
+              read_only: true
+        environment:
+            METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD}
+            MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD}
+            BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
+        networks:
+            - tester
+        depends_on:
+            - elasticsearch
+
+    heartbeat:
+        image: docker.elastic.co/beats/heartbeat:${ELASTIC_VERSION}
+        command:
+            - -e
+            - --strict.perms=false
+        volumes:
+            - ./heartbeat/config/heartbeat.yml:/usr/share/heartbeat/heartbeat.yml:ro,Z
+        environment:
+            HEARTBEAT_INTERNAL_PASSWORD: ${HEARTBEAT_INTERNAL_PASSWORD}
+            BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD}
+        networks:
+            - tester
+        depends_on:
+            - elasticsearch
+
+    apm-server:
+        image: docker.elastic.co/beats/elastic-agent:${ELASTIC_VERSION}
+        volumes:
+            - ./apm-server:/usr/share/elastic-agent/state:Z
+        environment:
+            FLEET_ENROLL: "1"
+            FLEET_TOKEN_POLICY_NAME: Agent Policy APM Server
+            FLEET_INSECURE: "1"
+            FLEET_URL: http://fleet-server:8220
+            ELASTICSEARCH_USERNAME: ${ELASTIC_USERNAME}
+            ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD}
+            FLEET_ENROLLMENT_TOKEN: <enrollment_token>
+        ports:
+            - 8200:8200
+        restart: on-failure
+        networks:
+            - tester
+        depends_on:
+            - elasticsearch
+            - kibana
+            - fleet-server
+
+    fleet-server:
+        image: docker.elastic.co/beats/elastic-agent:${ELASTIC_VERSION}
+        volumes:
+            - ./fleet-server:/usr/share/elastic-agent/state:Z
+        command: ["mkdir", "state"]
+        environment:
+            FLEET_SERVER_ENABLE: "1"
+            FLEET_SERVER_INSECURE_HTTP: "1"
+            FLEET_SERVER_HOST: 0.0.0.0
+            FLEET_SERVER_POLICY_ID: fleet-server-policy
+            KIBANA_FLEET_SETUP: "1"
+            ELASTICSEARCH_USERNAME: elastic
+            ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD}
+            FLEET_SERVER_SERVICE_TOKEN: <service_token>
+        ports:
+            - 8220:8220
+        # hostname: fleet-server
+        restart: on-failure
+        networks:
+            - tester
+        depends_on:
+            - elasticsearch
+            - kibana
 
 networks:
     # elastic-network:
